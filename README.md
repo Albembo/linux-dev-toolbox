@@ -12,7 +12,7 @@ It uses `xdotool` to send a microscopic (1 pixel) relative mouse movement period
 
 ---
 
-## ⚙️ Installation & Usage
+### ⚙️ Installation & Usage
 
 1. **Clone the repository:**
    `git clone https://github.com/Albembo/linux-dev-toolbox.git`
@@ -28,7 +28,7 @@ It uses `xdotool` to send a microscopic (1 pixel) relative mouse movement period
 
 ---
 
-## ⌨️ Keyboard Shortcut Setup (GNOME)
+### ⌨️ Keyboard Shortcut Setup (GNOME)
 
 For a seamless workflow, you can bind this script to a global keyboard shortcut so you don't need to keep a terminal window open.
 
