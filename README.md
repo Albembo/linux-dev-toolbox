@@ -42,3 +42,12 @@ For a seamless workflow, you can bind this script to a global keyboard shortcut 
 5. Click **Add**.
 
 Now you can toggle your keep-awake mechanism instantly right from your keyboard!
+
+## 🚀 Automated Environment Provisioning (Ansible)
+
+The `ansible/` directory contains playbooks to automate the setup of a fully-fledged backend development environment.
+
+**What it installs:**
+* **Go & Python:** Runtimes for high-performance backends and scripting.
+* **NVM (Node Version Manager):** For managing isolated Node.js environments.
+* **Portainer:** A lightweight management UI for Docker containers and local stacks.

@@ -1,0 +1,103 @@
+---
+- name: Setup Backend Developer Environment
+  hosts: localhost
+  become: yes 
+  vars:
+    user_name: "{{ lookup('env', 'USER') }}"
+    user_home: "{{ lookup('env', 'HOME') }}"
+
+  tasks:
+    - name: 📦 Install base packages and system prerequisites
+      apt:
+        name:
+          - curl
+          - git
+          - python3
+          - python3-pip
+          - golang-go
+          - ca-certificates
+          - gnupg
+        state: present
+        update_cache: yes
+
+    - name: 🔑 Create directory for third-party GPG keys
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: 🔑 Download official Docker GPG key
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: 🔑 Add official Docker repository to APT sources
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+        update_cache: yes
+
+    - name: 🐳 Install official Docker CE and its plugins
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: 🐳 Ensure Docker is active and starts on boot
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: 🔑 Add user to Docker group
+      user:
+        name: "{{ user_name }}"
+        groups: docker
+        append: yes
+
+    - name: 🚢 Start Portainer to manage containers
+      shell: |
+        docker run -d -p 8000:8000 -p 9443:9443 --name portainer \
+        --restart=always \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v portainer_data:/data \
+        portainer/portainer-ce:latest
+      register: portainer_result
+      failed_when:
+        - portainer_result.rc != 0
+        - "'Conflict' not in portainer_result.stderr"
+
+    - name: 👁️ Start Watchtower for automatic updates (Portainer ONLY)
+      shell: |
+        docker run -d --name watchtower \
+        --restart=always \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        containrrr/watchtower --cleanup --interval 86400 portainer
+      register: watchtower_result
+      failed_when:
+        - watchtower_result.rc != 0
+        - "'Conflict' not in watchtower_result.stderr"
+
+    - name: ⬇️ Install NVM (Node Version Manager)
+      become: no 
+      shell: >
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+      args:
+        creates: "{{ user_home }}/.nvm/nvm.sh"
+
+    - name: 🟢 Install requested Node.js versions via NVM
+      become: no
+      shell: |
+        source {{ user_home }}/.nvm/nvm.sh
+        nvm install 22
+        nvm install 24
+        nvm install node
+        nvm alias default node
+      args:
+        executable: /bin/bash
